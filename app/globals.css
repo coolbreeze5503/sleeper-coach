@@ -3,23 +3,23 @@
 @tailwind utilities;
 
 :root {
-  --font-display: 'Teko', sans-serif;
+  --font-display: 'Anton', sans-serif;
   --font-body: 'Inter', sans-serif;
   --font-mono: 'IBM Plex Mono', monospace;
 }
 
 body {
-  background-color: #0B3D2E;
+  background-color: #0B0B0D;
   background-image:
-    linear-gradient(180deg, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0) 12%),
+    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(216,30,44,0.12), transparent),
     repeating-linear-gradient(
       90deg,
-      rgba(255,255,255,0.02) 0px,
-      rgba(255,255,255,0.02) 1px,
+      rgba(255,255,255,0.015) 0px,
+      rgba(255,255,255,0.015) 1px,
       transparent 1px,
-      transparent 64px
+      transparent 48px
     );
-  color: #F5F3EC;
+  color: #F2F0EB;
   font-family: var(--font-body);
 }
 
@@ -29,22 +29,38 @@ body {
 }
 
 .hairline {
-  border-color: rgba(245, 243, 236, 0.14);
+  border-color: rgba(242, 240, 235, 0.1);
+}
+
+.card {
+  background-color: rgba(255, 255, 255, 0.02);
 }
 
 .verdict-add {
-  background-color: #D4A24C;
-  color: #082A20;
+  background-color: #D81E2C;
+  color: #F2F0EB;
 }
 
 .verdict-hold {
-  background-color: rgba(245, 243, 236, 0.1);
-  color: #F5F3EC;
+  background-color: rgba(242, 240, 235, 0.08);
+  color: #8A8A92;
 }
 
-.verdict-drop {
-  background-color: #C1432F;
-  color: #F5F3EC;
+.verdict-stream {
+  background-color: rgba(216, 30, 44, 0.15);
+  color: #FF3B44;
+  border: 1px solid rgba(216, 30, 44, 0.4);
+}
+
+.step-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 9999px;
+  background-color: rgba(242, 240, 235, 0.15);
+}
+
+.step-dot-active {
+  background-color: #D81E2C;
 }
 
 ::-webkit-scrollbar {
@@ -52,6 +68,6 @@ body {
   height: 8px;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(245, 243, 236, 0.2);
+  background: rgba(216, 30, 44, 0.3);
   border-radius: 4px;
 }
