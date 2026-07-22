@@ -35,10 +35,38 @@ const STEP_NUMBER = {
   [STAGES.PLAN]: 3,
 };
 
+function headshotUrl(playerId, size = "thumb") {
+  if (!playerId) return null;
+  return size === "thumb"
+    ? `https://sleepercdn.com/content/nfl/players/thumb/${playerId}.jpg`
+    : `https://sleepercdn.com/content/nfl/players/${playerId}.jpg`;
+}
+
+function Headshot({ playerId, size = "thumb", className = "" }) {
+  const [failed, setFailed] = useState(false);
+  const url = headshotUrl(playerId, size);
+  const dim = size === "thumb" ? "w-10 h-10" : "w-16 h-16";
+  if (!url || failed) {
+    return (
+      <div className={`${dim} rounded-full bg-coal-lighter border hairline flex items-center justify-center text-steel text-xs stat ${className}`}>
+        N/A
+      </div>
+    );
+  }
+  return (
+    <img
+      src={url}
+      alt=""
+      onError={() => setFailed(true)}
+      className={`${dim} rounded-full object-cover bg-coal-lighter border hairline ${className}`}
+    />
+  );
+}
+
 function StepDots({ stage }) {
   const current = STEP_NUMBER[stage] || 1;
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center justify-center gap-2">
       {[1, 2, 3].map((n) => (
         <span
           key={n}
@@ -162,35 +190,35 @@ export default function Home() {
   return (
     <main className="min-h-screen font-body">
       <header className="border-b hairline px-6 py-6">
-        <div className="max-w-4xl mx-auto flex items-center justify-between">
-          <div className="flex items-baseline gap-3">
-            <h1 className="font-display text-4xl tracking-wide leading-none text-bone">
+        <div className="max-w-4xl mx-auto flex flex-col items-center text-center gap-3">
+          <div>
+            <h1 className="font-display font-bold text-4xl tracking-widest leading-none text-bone">
               GAMEPLAN
             </h1>
-            <span className="hidden sm:inline text-[11px] uppercase tracking-[0.25em] text-steel">
+            <p className="text-[11px] uppercase tracking-[0.3em] text-steel mt-2">
               Weekly Roster Coach
-            </span>
+            </p>
           </div>
           <StepDots stage={stage} />
         </div>
-        <div className="h-[2px] w-16 bg-crimson mt-4 max-w-4xl mx-auto" />
+        <div className="h-[2px] w-16 bg-crimson mt-4 mx-auto" />
       </header>
 
-      <div className="max-w-4xl mx-auto px-6 py-10">
+      <div className="max-w-2xl mx-auto px-6 py-10 flex flex-col items-center text-center">
         {error && (
-          <div className="mb-6 border border-crimson/50 bg-crimson/10 text-bone px-4 py-3 text-sm">
+          <div className="mb-6 w-full border border-crimson/50 bg-crimson/10 text-bone px-4 py-3 text-sm text-left">
             {error}
           </div>
         )}
 
         {stage === STAGES.USERNAME && (
-          <div className="max-w-sm">
+          <div className="w-full max-w-sm">
             <p className="text-xs uppercase tracking-[0.2em] text-crimson mb-1">Step 1 of 3</p>
-            <h2 className="font-display text-2xl mb-1">Find your leagues</h2>
+            <h2 className="font-display font-bold text-2xl mb-1">Find your leagues</h2>
             <p className="text-sm text-steel mb-6">
               Enter the username you use to log into Sleeper. This only reads public league data — no password needed.
             </p>
-            <form onSubmit={handleFindLeagues} className="space-y-4">
+            <form onSubmit={handleFindLeagues} className="space-y-4 text-left">
               <label className="block">
                 <span className="text-xs uppercase tracking-wider text-steel">
                   Sleeper Username
@@ -201,12 +229,12 @@ export default function Home() {
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   placeholder="e.g. jsmith22"
-                  className="mt-1 w-full bg-coal-light border hairline px-3 py-2.5 text-bone focus:outline-none focus:border-crimson rounded-sm"
+                  className="mt-1 w-full bg-coal-light border hairline px-3 py-2.5 text-bone focus:outline-none focus:border-crimson rounded-sm text-center"
                 />
               </label>
               <button
                 type="submit"
-                className="w-full bg-crimson text-bone font-display text-xl tracking-wide px-5 py-2.5 hover:bg-crimson-bright transition-colors rounded-sm"
+                className="w-full bg-crimson text-bone font-display font-bold text-xl tracking-wide px-5 py-2.5 hover:bg-crimson-bright transition-colors rounded-sm"
               >
                 FIND MY LEAGUES
               </button>
@@ -222,10 +250,10 @@ export default function Home() {
         )}
 
         {stage === STAGES.LEAGUE && leagues.length > 0 && (
-          <div className="space-y-8">
+          <div className="w-full space-y-8">
             <div>
               <p className="text-xs uppercase tracking-[0.2em] text-crimson mb-1">Step 2 of 3</p>
-              <h2 className="font-display text-2xl mb-1">Pick a league and week</h2>
+              <h2 className="font-display font-bold text-2xl mb-1">Pick a league and week</h2>
               <p className="text-sm text-steel">
                 Choose which week you're planning for, then tap a league to build your game plan.
               </p>
@@ -235,7 +263,7 @@ export default function Home() {
               <span className="text-xs uppercase tracking-wider text-steel">
                 Week
               </span>
-              <div className="mt-2 flex gap-2 flex-wrap">
+              <div className="mt-2 flex gap-2 flex-wrap justify-center">
                 {Array.from({ length: 18 }, (_, i) => i + 1).map((w) => (
                   <button
                     key={w}
@@ -254,14 +282,14 @@ export default function Home() {
               <span className="text-xs uppercase tracking-wider text-steel">
                 League
               </span>
-              <div className="mt-2 grid gap-2">
+              <div className="mt-2 grid gap-2 text-left">
                 {leagues.map((lg) => (
                   <button
                     key={lg.league_id}
                     onClick={() => handleBuildPlan(lg, week)}
                     className="card text-left border hairline px-4 py-3 hover:border-crimson transition-colors rounded-sm"
                   >
-                    <div className="font-display text-2xl leading-none text-bone">{lg.name}</div>
+                    <div className="font-display font-bold text-2xl leading-none text-bone">{lg.name}</div>
                     <div className="text-xs stat text-steel mt-1">
                       {lg.total_rosters} teams · {lg.season}
                     </div>
@@ -273,24 +301,22 @@ export default function Home() {
         )}
 
         {stage === STAGES.PLAN && (
-          <div className="space-y-6">
-            <div>
+          <div className="w-full space-y-6 text-left">
+            <div className="text-center">
               <p className="text-xs uppercase tracking-[0.2em] text-crimson mb-1">Step 3 of 3</p>
-              <div className="flex items-baseline justify-between">
-                <h2 className="font-display text-3xl text-bone">{teamName}</h2>
-                <button
-                  onClick={() => setStage(STAGES.LEAGUE)}
-                  className="text-xs uppercase tracking-widest text-steel hover:text-crimson transition-colors"
-                >
-                  ← change week/league
-                </button>
-              </div>
+              <h2 className="font-display font-bold text-3xl text-bone">{teamName}</h2>
               <p className="text-sm text-steel mt-1">
-                {league?.name} · Week {week}. Every starting slot below is checked against the best unowned player available.
+                {league?.name} · Week {week}
               </p>
+              <button
+                onClick={() => setStage(STAGES.LEAGUE)}
+                className="text-xs uppercase tracking-widest text-steel hover:text-crimson transition-colors mt-2"
+              >
+                ← change week/league
+              </button>
             </div>
 
-            <div className="flex flex-wrap gap-4 text-xs text-steel pb-2 border-b hairline">
+            <div className="flex flex-wrap justify-center gap-4 text-xs text-steel pb-4 border-b hairline">
               <span><span className="verdict-add px-2 py-0.5 rounded-sm mr-1">ADD</span>clear upgrade available</span>
               <span><span className="verdict-stream px-2 py-0.5 rounded-sm mr-1">STREAM</span>modest upgrade, optional</span>
               <span><span className="verdict-hold px-2 py-0.5 rounded-sm mr-1">HOLD</span>keep your starter</span>
@@ -300,18 +326,19 @@ export default function Home() {
               <div key={row.slot + (row.playerId || "")} className="card border hairline rounded-sm overflow-hidden">
                 <div className="flex items-center justify-between px-4 py-3 border-b hairline">
                   <div className="flex items-center gap-3">
-                    <span className="stat text-xs text-steel w-14">{row.slot}</span>
+                    <span className="stat text-xs text-steel w-10">{row.slot}</span>
+                    <Headshot playerId={row.playerId} />
                     <div>
-                      <div className="font-display text-2xl leading-none text-bone">
-                        {row.playerName} {row.team && <span className="text-steel">· {row.team}</span>}
+                      <div className="font-display font-bold text-xl leading-none text-bone">
+                        {row.playerName} {row.team && <span className="text-steel font-body font-normal text-sm">· {row.team}</span>}
                       </div>
-                      <div className="stat text-xs text-steel">
+                      <div className="stat text-xs text-steel mt-1">
                         proj {row.currentPts.toFixed(1)} pts
                       </div>
                     </div>
                   </div>
                   <span
-                    className={`px-3 py-1 text-xs font-display text-lg tracking-wide rounded-sm ${
+                    className={`px-3 py-1 text-xs font-display font-bold text-lg tracking-wide rounded-sm ${
                       row.verdict.label === "ADD"
                         ? "verdict-add"
                         : row.verdict.label === "STREAM"
@@ -324,19 +351,24 @@ export default function Home() {
                 </div>
                 <div className="px-4 py-2 text-sm text-bone/80">{row.verdict.reason}</div>
                 {row.upgrades.length > 0 && (
-                  <div className="px-4 pb-3 flex gap-2 flex-wrap">
+                  <div className="px-4 pb-3 space-y-2">
                     {row.upgrades.map((u) => (
                       <div
                         key={u.playerId}
-                        className="stat text-xs border hairline px-2 py-1 flex items-center gap-2 rounded-sm"
+                        className="flex items-center gap-3 border hairline px-3 py-2 rounded-sm"
                       >
-                        <span className="text-bone">{u.name}</span>
-                        <span className="text-steel">{u.team}</span>
-                        <span className={u.delta > 0 ? "text-crimson-bright" : "text-steel"}>
-                          {u.projected.toFixed(1)} ({u.delta > 0 ? "+" : ""}
-                          {u.delta})
-                        </span>
-                        {u.trending && <span className="text-crimson-bright">🔥 trending</span>}
+                        <Headshot playerId={u.playerId} />
+                        <div className="flex-1 min-w-0">
+                          <div className="text-bone text-sm font-medium truncate">{u.name}</div>
+                          <div className="stat text-xs text-steel">{u.team} · {u.position}</div>
+                        </div>
+                        <div className="text-right stat text-xs">
+                          <div className="text-bone">{u.projected.toFixed(1)} pts</div>
+                          <div className={u.delta > 0 ? "text-crimson-bright" : "text-steel"}>
+                            {u.delta > 0 ? "+" : ""}{u.delta}
+                          </div>
+                        </div>
+                        {u.trending && <span className="text-crimson-bright text-xs">🔥</span>}
                       </div>
                     ))}
                   </div>
