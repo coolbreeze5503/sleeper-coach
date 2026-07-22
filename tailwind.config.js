@@ -7,15 +7,18 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        turf: {
-          DEFAULT: "#0B3D2E",
-          dark: "#082A20",
-          light: "#124E3A",
+        coal: {
+          DEFAULT: "#0B0B0D",
+          light: "#17171A",
+          lighter: "#222226",
         },
-        chalk: "#F5F3EC",
-        gold: "#D4A24C",
-        alert: "#C1432F",
-        slate: "#3A4750",
+        crimson: {
+          DEFAULT: "#D81E2C",
+          dark: "#8F0F1B",
+          bright: "#FF3B44",
+        },
+        bone: "#F2F0EB",
+        steel: "#8A8A92",
       },
       fontFamily: {
         display: ["var(--font-display)", "sans-serif"],
