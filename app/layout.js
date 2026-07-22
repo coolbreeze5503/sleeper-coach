@@ -1,9 +1,9 @@
-import { Anton, Inter, IBM_Plex_Mono } from "next/font/google";
+import { Orbitron, Inter, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 
-const anton = Anton({
+const orbitron = Orbitron({
   subsets: ["latin"],
-  weight: ["400"],
+  weight: ["500", "700", "800"],
   variable: "--font-display",
 });
 
@@ -25,7 +25,7 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" className={`${anton.variable} ${inter.variable} ${plexMono.variable}`}>
+    <html lang="en" className={`${orbitron.variable} ${inter.variable} ${plexMono.variable}`}>
       <body>{children}</body>
     </html>
   );
