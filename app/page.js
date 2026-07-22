@@ -60,7 +60,6 @@ export default function Home() {
       setStage(STAGES.USERNAME);
     }
   }
-
   async function handleBuildPlan(selectedLeague, selectedWeek) {
     setError(null);
     setStage(STAGES.LOADING);
@@ -289,4 +288,6 @@ export default function Home() {
           </div>
         )}
       </div>
-    
+    </main>
+  );
+}
