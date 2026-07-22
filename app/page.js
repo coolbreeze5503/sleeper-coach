@@ -28,6 +28,27 @@ const STAGES = {
   PLAN: "plan",
 };
 
+const STEP_NUMBER = {
+  [STAGES.USERNAME]: 1,
+  [STAGES.LEAGUE]: 2,
+  [STAGES.LOADING]: 2,
+  [STAGES.PLAN]: 3,
+};
+
+function StepDots({ stage }) {
+  const current = STEP_NUMBER[stage] || 1;
+  return (
+    <div className="flex items-center gap-2">
+      {[1, 2, 3].map((n) => (
+        <span
+          key={n}
+          className={`step-dot ${n <= current ? "step-dot-active" : ""}`}
+        />
+      ))}
+    </div>
+  );
+}
+
 export default function Home() {
   const [stage, setStage] = useState(STAGES.USERNAME);
   const [error, setError] = useState(null);
@@ -47,10 +68,10 @@ export default function Home() {
     setStage(STAGES.LOADING);
     try {
       const u = await getUser(username.trim());
-      if (!u || !u.user_id) throw new Error("Sleeper username not found.");
+      if (!u || !u.user_id) throw new Error("That Sleeper username wasn't found. Double check the spelling — it's case-sensitive.");
       const state = await getNflState();
       const lgs = await getUserLeagues(u.user_id, state.season);
-      if (!lgs.length) throw new Error("No NFL leagues found for that user this season.");
+      if (!lgs.length) throw new Error("No NFL leagues found for that username this season.");
       setUser(u);
       setLeagues(lgs);
       setWeek(state.week || 1);
@@ -60,6 +81,7 @@ export default function Home() {
       setStage(STAGES.USERNAME);
     }
   }
+
   async function handleBuildPlan(selectedLeague, selectedWeek) {
     setError(null);
     setStage(STAGES.LOADING);
@@ -139,63 +161,87 @@ export default function Home() {
 
   return (
     <main className="min-h-screen font-body">
-      <header className="border-b hairline px-6 py-5 flex items-baseline justify-between">
-        <h1 className="font-display text-4xl tracking-wide leading-none">
-          GAMEPLAN
-        </h1>
-        <span className="text-xs uppercase tracking-[0.2em] text-chalk/60 stat">
-          {stage === STAGES.PLAN && league ? `${league.name} · Week ${week}` : "Weekly Roster Coach"}
-        </span>
+      <header className="border-b hairline px-6 py-6">
+        <div className="max-w-4xl mx-auto flex items-center justify-between">
+          <div className="flex items-baseline gap-3">
+            <h1 className="font-display text-4xl tracking-wide leading-none text-bone">
+              GAMEPLAN
+            </h1>
+            <span className="hidden sm:inline text-[11px] uppercase tracking-[0.25em] text-steel">
+              Weekly Roster Coach
+            </span>
+          </div>
+          <StepDots stage={stage} />
+        </div>
+        <div className="h-[2px] w-16 bg-crimson mt-4 max-w-4xl mx-auto" />
       </header>
 
       <div className="max-w-4xl mx-auto px-6 py-10">
         {error && (
-          <div className="mb-6 border border-alert/60 bg-alert/10 text-chalk px-4 py-3 text-sm">
+          <div className="mb-6 border border-crimson/50 bg-crimson/10 text-bone px-4 py-3 text-sm">
             {error}
           </div>
         )}
 
         {stage === STAGES.USERNAME && (
-          <form onSubmit={handleFindLeagues} className="space-y-4 max-w-sm">
-            <label className="block">
-              <span className="text-sm uppercase tracking-wider text-chalk/70">
-                Sleeper Username
-              </span>
-              <input
-                autoFocus
-                required
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder="e.g. jsmith22"
-                className="mt-1 w-full bg-transparent border hairline px-3 py-2 text-chalk focus:outline-none focus:border-gold"
-              />
-            </label>
-            <button
-              type="submit"
-              className="bg-gold text-turf-dark font-display text-xl tracking-wide px-5 py-2 hover:brightness-110"
-            >
-              FIND MY LEAGUES
-            </button>
-          </form>
+          <div className="max-w-sm">
+            <p className="text-xs uppercase tracking-[0.2em] text-crimson mb-1">Step 1 of 3</p>
+            <h2 className="font-display text-2xl mb-1">Find your leagues</h2>
+            <p className="text-sm text-steel mb-6">
+              Enter the username you use to log into Sleeper. This only reads public league data — no password needed.
+            </p>
+            <form onSubmit={handleFindLeagues} className="space-y-4">
+              <label className="block">
+                <span className="text-xs uppercase tracking-wider text-steel">
+                  Sleeper Username
+                </span>
+                <input
+                  autoFocus
+                  required
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder="e.g. jsmith22"
+                  className="mt-1 w-full bg-coal-light border hairline px-3 py-2.5 text-bone focus:outline-none focus:border-crimson rounded-sm"
+                />
+              </label>
+              <button
+                type="submit"
+                className="w-full bg-crimson text-bone font-display text-xl tracking-wide px-5 py-2.5 hover:bg-crimson-bright transition-colors rounded-sm"
+              >
+                FIND MY LEAGUES
+              </button>
+            </form>
+          </div>
         )}
 
         {stage === STAGES.LOADING && (
-          <p className="stat text-chalk/70 animate-pulse">Pulling data from Sleeper…</p>
+          <div className="flex items-center gap-3 text-steel">
+            <span className="w-2 h-2 rounded-full bg-crimson animate-ping" />
+            <p className="stat text-sm">Pulling data from Sleeper…</p>
+          </div>
         )}
 
         {stage === STAGES.LEAGUE && leagues.length > 0 && (
-          <div className="space-y-6">
+          <div className="space-y-8">
             <div>
-              <span className="text-sm uppercase tracking-wider text-chalk/70">
-                Week to analyze
+              <p className="text-xs uppercase tracking-[0.2em] text-crimson mb-1">Step 2 of 3</p>
+              <h2 className="font-display text-2xl mb-1">Pick a league and week</h2>
+              <p className="text-sm text-steel">
+                Choose which week you're planning for, then tap a league to build your game plan.
+              </p>
+            </div>
+
+            <div>
+              <span className="text-xs uppercase tracking-wider text-steel">
+                Week
               </span>
-              <div className="mt-1 flex gap-2 flex-wrap">
+              <div className="mt-2 flex gap-2 flex-wrap">
                 {Array.from({ length: 18 }, (_, i) => i + 1).map((w) => (
                   <button
                     key={w}
                     onClick={() => setWeek(w)}
-                    className={`stat text-sm w-9 h-9 border hairline ${
-                      w === week ? "bg-gold text-turf-dark border-gold" : "hover:border-gold"
+                    className={`stat text-sm w-9 h-9 border hairline rounded-sm transition-colors ${
+                      w === week ? "bg-crimson text-bone border-crimson" : "hover:border-crimson text-steel"
                     }`}
                   >
                     {w}
@@ -205,18 +251,18 @@ export default function Home() {
             </div>
 
             <div>
-              <span className="text-sm uppercase tracking-wider text-chalk/70">
-                Choose a league
+              <span className="text-xs uppercase tracking-wider text-steel">
+                League
               </span>
               <div className="mt-2 grid gap-2">
                 {leagues.map((lg) => (
                   <button
                     key={lg.league_id}
                     onClick={() => handleBuildPlan(lg, week)}
-                    className="text-left border hairline px-4 py-3 hover:border-gold transition-colors"
+                    className="card text-left border hairline px-4 py-3 hover:border-crimson transition-colors rounded-sm"
                   >
-                    <div className="font-display text-2xl leading-none">{lg.name}</div>
-                    <div className="text-xs stat text-chalk/60 mt-1">
+                    <div className="font-display text-2xl leading-none text-bone">{lg.name}</div>
+                    <div className="text-xs stat text-steel mt-1">
                       {lg.total_rosters} teams · {lg.season}
                     </div>
                   </button>
@@ -227,58 +273,70 @@ export default function Home() {
         )}
 
         {stage === STAGES.PLAN && (
-          <div className="space-y-4">
-            <div className="flex items-baseline justify-between">
-              <h2 className="font-display text-3xl">{teamName}</h2>
-              <button
-                onClick={() => setStage(STAGES.LEAGUE)}
-                className="text-xs uppercase tracking-widest text-chalk/60 hover:text-gold"
-              >
-                ← change week/league
-              </button>
+          <div className="space-y-6">
+            <div>
+              <p className="text-xs uppercase tracking-[0.2em] text-crimson mb-1">Step 3 of 3</p>
+              <div className="flex items-baseline justify-between">
+                <h2 className="font-display text-3xl text-bone">{teamName}</h2>
+                <button
+                  onClick={() => setStage(STAGES.LEAGUE)}
+                  className="text-xs uppercase tracking-widest text-steel hover:text-crimson transition-colors"
+                >
+                  ← change week/league
+                </button>
+              </div>
+              <p className="text-sm text-steel mt-1">
+                {league?.name} · Week {week}. Every starting slot below is checked against the best unowned player available.
+              </p>
+            </div>
+
+            <div className="flex flex-wrap gap-4 text-xs text-steel pb-2 border-b hairline">
+              <span><span className="verdict-add px-2 py-0.5 rounded-sm mr-1">ADD</span>clear upgrade available</span>
+              <span><span className="verdict-stream px-2 py-0.5 rounded-sm mr-1">STREAM</span>modest upgrade, optional</span>
+              <span><span className="verdict-hold px-2 py-0.5 rounded-sm mr-1">HOLD</span>keep your starter</span>
             </div>
 
             {gamePlan.map((row) => (
-              <div key={row.slot + (row.playerId || "")} className="border hairline">
+              <div key={row.slot + (row.playerId || "")} className="card border hairline rounded-sm overflow-hidden">
                 <div className="flex items-center justify-between px-4 py-3 border-b hairline">
                   <div className="flex items-center gap-3">
-                    <span className="stat text-xs text-chalk/50 w-14">{row.slot}</span>
+                    <span className="stat text-xs text-steel w-14">{row.slot}</span>
                     <div>
-                      <div className="font-display text-2xl leading-none">
-                        {row.playerName} {row.team && <span className="text-chalk/50">· {row.team}</span>}
+                      <div className="font-display text-2xl leading-none text-bone">
+                        {row.playerName} {row.team && <span className="text-steel">· {row.team}</span>}
                       </div>
-                      <div className="stat text-xs text-chalk/60">
+                      <div className="stat text-xs text-steel">
                         proj {row.currentPts.toFixed(1)} pts
                       </div>
                     </div>
                   </div>
                   <span
-                    className={`px-3 py-1 text-xs font-display text-lg tracking-wide ${
+                    className={`px-3 py-1 text-xs font-display text-lg tracking-wide rounded-sm ${
                       row.verdict.label === "ADD"
                         ? "verdict-add"
                         : row.verdict.label === "STREAM"
-                        ? "bg-slate text-chalk"
+                        ? "verdict-stream"
                         : "verdict-hold"
                     }`}
                   >
                     {row.verdict.label}
                   </span>
                 </div>
-                <div className="px-4 py-2 text-sm text-chalk/80">{row.verdict.reason}</div>
+                <div className="px-4 py-2 text-sm text-bone/80">{row.verdict.reason}</div>
                 {row.upgrades.length > 0 && (
                   <div className="px-4 pb-3 flex gap-2 flex-wrap">
                     {row.upgrades.map((u) => (
                       <div
                         key={u.playerId}
-                        className="stat text-xs border hairline px-2 py-1 flex items-center gap-2"
+                        className="stat text-xs border hairline px-2 py-1 flex items-center gap-2 rounded-sm"
                       >
-                        <span>{u.name}</span>
-                        <span className="text-chalk/50">{u.team}</span>
-                        <span className={u.delta > 0 ? "text-gold" : "text-chalk/50"}>
+                        <span className="text-bone">{u.name}</span>
+                        <span className="text-steel">{u.team}</span>
+                        <span className={u.delta > 0 ? "text-crimson-bright" : "text-steel"}>
                           {u.projected.toFixed(1)} ({u.delta > 0 ? "+" : ""}
                           {u.delta})
                         </span>
-                        {u.trending && <span className="text-alert">🔥 trending</span>}
+                        {u.trending && <span className="text-crimson-bright">🔥 trending</span>}
                       </div>
                     ))}
                   </div>
