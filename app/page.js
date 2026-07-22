@@ -10,6 +10,7 @@ import {
   getNflState,
   getAllPlayers,
   getWeekProjections,
+  getWeekStats,
   getTrending,
 } from "../lib/sleeper";
 import {
@@ -19,6 +20,7 @@ import {
   pairStartersToSlots,
   findUpgrades,
   verdictFor,
+  buildBoomBustMap,
 } from "../lib/recommend";
 
 const STAGES = {
@@ -33,6 +35,15 @@ const STEP_NUMBER = {
   [STAGES.LEAGUE]: 2,
   [STAGES.LOADING]: 2,
   [STAGES.PLAN]: 3,
+};
+
+const INJURY_LABELS = {
+  Questionable: "Q",
+  Doubtful: "D",
+  Out: "O",
+  IR: "IR",
+  PUP: "PUP",
+  Suspended: "SUS",
 };
 
 function headshotUrl(playerId, size = "thumb") {
@@ -60,6 +71,25 @@ function Headshot({ playerId, size = "thumb", className = "" }) {
       onError={() => setFailed(true)}
       className={`${dim} rounded-full object-cover bg-coal-lighter border hairline ${className}`}
     />
+  );
+}
+
+function InjuryBadge({ status }) {
+  const label = INJURY_LABELS[status];
+  if (!label) return null;
+  return (
+    <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-sm bg-crimson/20 text-crimson-bright border border-crimson/40">
+      {label}
+    </span>
+  );
+}
+
+function BoomBust({ data }) {
+  if (!data) return null;
+  return (
+    <span className="stat text-[11px] text-steel">
+      floor {data.floor} · ceil {data.ceiling}
+    </span>
   );
 }
 
@@ -108,9 +138,7 @@ export default function Home() {
       setError(err.message || "Something went wrong looking up that username.");
       setStage(STAGES.USERNAME);
     }
-  }
-
-  async function handleBuildPlan(selectedLeague, selectedWeek) {
+  }async function handleBuildPlan(selectedLeague, selectedWeek) {
     setError(null);
     setStage(STAGES.LOADING);
     try {
@@ -138,22 +166,29 @@ export default function Home() {
         else if (p === "REC_FLEX") ["WR", "TE"].forEach((x) => realPositions.add(x));
         else realPositions.add(p);
       });
+      const posArray = Array.from(realPositions);
 
-      const projections = await getWeekProjections(
-        fullLeague.season,
-        selectedWeek,
-        Array.from(realPositions)
-      );
+      const projections = await getWeekProjections(fullLeague.season, selectedWeek, posArray);
       const key = scoringKey(fullLeague);
       const projectionMap = buildProjectionMap(projections, key);
       const ownedSet = buildOwnedSet(rosters);
       const trendingAddIds = new Set(trendingAdds.map((t) => t.player_id));
 
+      // Pull up to the last 4 completed weeks of real stats for boom/bust ranges.
+      const lookbackWeeks = [];
+      for (let w = selectedWeek - 1; w >= 1 && lookbackWeeks.length < 4; w--) {
+        lookbackWeeks.push(w);
+      }
+      const weeklyStatsList = await Promise.all(
+        lookbackWeeks.map((w) => getWeekStats(fullLeague.season, w, posArray).catch(() => []))
+      );
+      const boomBustMap = buildBoomBustMap(weeklyStatsList, key);
+
       const pairings = pairStartersToSlots(fullLeague, myRoster, players);
 
       const plan = pairings.map(({ slot, playerId, player }) => {
         const currentPts = playerId ? projectionMap.get(playerId) ?? 0 : 0;
-        const upgrades = findUpgrades({
+        const upgradesRaw = findUpgrades({
           slot,
           currentPlayerId: playerId,
           currentPts,
@@ -162,6 +197,11 @@ export default function Home() {
           projectionMap,
           trendingAddIds,
         });
+        const upgrades = upgradesRaw.map((u) => ({
+          ...u,
+          boomBust: boomBustMap.get(u.playerId) || null,
+          injuryStatus: players[u.playerId]?.injury_status || null,
+        }));
         const best = upgrades[0];
         const verdict = playerId ? verdictFor(currentPts, best) : {
           label: "ADD",
@@ -173,6 +213,8 @@ export default function Home() {
           playerName: player ? `${player.first_name} ${player.last_name}` : "Empty slot",
           team: player?.team || "",
           currentPts,
+          injuryStatus: player?.injury_status || null,
+          boomBust: playerId ? boomBustMap.get(playerId) || null : null,
           upgrades,
           verdict,
         };
@@ -320,6 +362,8 @@ export default function Home() {
               <span><span className="verdict-add px-2 py-0.5 rounded-sm mr-1">ADD</span>clear upgrade available</span>
               <span><span className="verdict-stream px-2 py-0.5 rounded-sm mr-1">STREAM</span>modest upgrade, optional</span>
               <span><span className="verdict-hold px-2 py-0.5 rounded-sm mr-1">HOLD</span>keep your starter</span>
+              <span><span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-sm bg-crimson/20 text-crimson-bright border border-crimson/40 mr-1">Q</span>injury flag</span>
+              <span>floor/ceil = last 4 games' actual range</span>
             </div>
 
             {gamePlan.map((row) => (
@@ -329,11 +373,14 @@ export default function Home() {
                     <span className="stat text-xs text-steel w-10">{row.slot}</span>
                     <Headshot playerId={row.playerId} />
                     <div>
-                      <div className="font-display font-bold text-xl leading-none text-bone">
-                        {row.playerName} {row.team && <span className="text-steel font-body font-normal text-sm">· {row.team}</span>}
+                      <div className="font-display font-bold text-xl leading-none text-bone flex items-center gap-2">
+                        {row.playerName}
+                        <InjuryBadge status={row.injuryStatus} />
+                        {row.team && <span className="text-steel font-body font-normal text-sm">· {row.team}</span>}
                       </div>
-                      <div className="stat text-xs text-steel mt-1">
-                        proj {row.currentPts.toFixed(1)} pts
+                      <div className="stat text-xs text-steel mt-1 flex items-center gap-2">
+                        <span>proj {row.currentPts.toFixed(1)} pts</span>
+                        <BoomBust data={row.boomBust} />
                       </div>
                     </div>
                   </div>
@@ -359,8 +406,14 @@ export default function Home() {
                       >
                         <Headshot playerId={u.playerId} />
                         <div className="flex-1 min-w-0">
-                          <div className="text-bone text-sm font-medium truncate">{u.name}</div>
-                          <div className="stat text-xs text-steel">{u.team} · {u.position}</div>
+                          <div className="text-bone text-sm font-medium truncate flex items-center gap-2">
+                            {u.name}
+                            <InjuryBadge status={u.injuryStatus} />
+                          </div>
+                          <div className="stat text-xs text-steel flex items-center gap-2">
+                            <span>{u.team} · {u.position}</span>
+                            <BoomBust data={u.boomBust} />
+                          </div>
                         </div>
                         <div className="text-right stat text-xs">
                           <div className="text-bone">{u.projected.toFixed(1)} pts</div>
