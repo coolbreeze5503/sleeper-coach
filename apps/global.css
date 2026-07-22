@@ -1,0 +1,57 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-display: 'Teko', sans-serif;
+  --font-body: 'Inter', sans-serif;
+  --font-mono: 'IBM Plex Mono', monospace;
+}
+
+body {
+  background-color: #0B3D2E;
+  background-image:
+    linear-gradient(180deg, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0) 12%),
+    repeating-linear-gradient(
+      90deg,
+      rgba(255,255,255,0.02) 0px,
+      rgba(255,255,255,0.02) 1px,
+      transparent 1px,
+      transparent 64px
+    );
+  color: #F5F3EC;
+  font-family: var(--font-body);
+}
+
+.stat {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.hairline {
+  border-color: rgba(245, 243, 236, 0.14);
+}
+
+.verdict-add {
+  background-color: #D4A24C;
+  color: #082A20;
+}
+
+.verdict-hold {
+  background-color: rgba(245, 243, 236, 0.1);
+  color: #F5F3EC;
+}
+
+.verdict-drop {
+  background-color: #C1432F;
+  color: #F5F3EC;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(245, 243, 236, 0.2);
+  border-radius: 4px;
+}
